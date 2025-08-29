@@ -36,3 +36,11 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Maven / IDE
+.idea/
+*.log
+
+# Локальные данные приложения
+messenger-keys.dat
+inbox/
