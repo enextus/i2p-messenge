@@ -44,3 +44,7 @@ build/
 # Локальные данные приложения
 messenger-keys.dat
 inbox/
+
+# I2P
+*.dat
+!messenger-keys.dat
