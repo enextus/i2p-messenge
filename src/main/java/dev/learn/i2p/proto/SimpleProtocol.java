@@ -9,6 +9,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import dev.learn.i2p.core.InboundSaver;
+import java.io.InputStream;
+import java.nio.file.Path;
+import net.i2p.client.streaming.I2PSocket;
+
 public class SimpleProtocol implements MessengerProtocol {
     private final Path inbox;
 
@@ -17,16 +22,23 @@ public class SimpleProtocol implements MessengerProtocol {
     }
 
     @Override
-    public void handle(I2PSocket socket) throws IOException {
-        Files.createDirectories(inbox);
-        byte[] data;
-        try (InputStream in = socket.getInputStream()) {
-            data = in.readAllBytes(); // простой one-shot протокол
+    public void handle(I2PSocket socket) throws java.io.IOException {
+        String senderB32 = null;
+        try {
+            var peer = socket.getPeerDestination();
+            if (peer != null) senderB32 = net.i2p.data.Base32.encode(peer.calculateHash().getData()) + ".b32.i2p";
+        } catch (Throwable ignore) {
+            // best-effort: адрес отправителя не обязателен
         }
-        if (data.length == 0) return;
-        Path out = inbox.resolve("msg-" + System.currentTimeMillis() + ".bin");
-        Files.write(out, data);
+
+        try (InputStream in = socket.getInputStream()) {
+            Path saved = InboundSaver.saveSmart(inbox, senderB32, in);
+            // Лог — информативный: mime/ext/size пишет InboundSaver; тут можно кратко
+            org.slf4j.LoggerFactory.getLogger(SimpleProtocol.class)
+                    .info("Inbound stored as {}", saved.getFileName());
+        }
     }
+
 
     @Override
     public void sendText(I2PSocket socket, String text) throws IOException {

@@ -27,6 +27,7 @@ netstat -ano | grep -E ":7654" | grep -E "LISTEN|LISTENING"
 ## 1) Раздельные профили (ключи/входящие) для Alice и Bob
 
 ```bash
+
 export ALICE_HOME=/c/tmp/i2p-alice
 export BOB_HOME=/c/tmp/i2p-bob
 mkdir -p "$ALICE_HOME" "$BOB_HOME"

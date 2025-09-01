@@ -1,8 +1,8 @@
-// src/test/java/dev/learn/i2p/cli/CliSmokeTest.java
+// Start src/test/java/dev/learn/i2p/cli/CliSmokeTest.java
 package dev.learn.i2p.cli;
 
 import dev.learn.i2p.net.I2PTransport;
-import net.i2p.client.streaming.I2PSocket;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -11,16 +11,12 @@ import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Method;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class CliSmokeTest {

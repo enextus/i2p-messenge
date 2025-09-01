@@ -88,4 +88,5 @@ public final class ProfileManager {
         String s = Long.toString(n, 36);
         return s.length() >= 8 ? s.substring(0,8) : String.format("%08s", s).replace(' ', '0');
     }
+
 }

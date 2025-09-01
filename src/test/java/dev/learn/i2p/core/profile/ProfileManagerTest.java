@@ -80,4 +80,5 @@ class ProfileManagerTest {
                     () -> ProfileManager.resolve(base, key, base.resolve("inbox"), false, false));
         }
     }
+
 }

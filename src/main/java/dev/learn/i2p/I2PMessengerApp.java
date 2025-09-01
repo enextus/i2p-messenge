@@ -24,9 +24,6 @@ import java.util.Objects;
 import java.util.Properties;
 
 public class I2PMessengerApp {
-
-
-
     // Где держим ключи (eepPriv.dat совместимый формат)
     private static final Path KEY_FILE = Path.of("messenger-keys.dat");
     // Куда сохраняем входящие файлы
