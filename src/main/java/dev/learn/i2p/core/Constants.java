@@ -11,4 +11,5 @@ public final class Constants {
     public static final int MAX_IMAGE_BYTES  = 32 * 1024 * 1024; // 32 MB
     public static final int BUFFER_SIZE      = 8192;        // буфер для потоков
     public static final int MAX_FILENAME_LENGTH = 255;      // ограничение имени файла
+
 }

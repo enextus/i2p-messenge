@@ -1,4 +1,4 @@
-// src/main/java/dev/learn/i2p/proto/FileType.java
+// start src/main/java/dev/learn/i2p/proto/FileType.java
 package dev.learn.i2p.proto;
 
 public enum FileType {
@@ -57,3 +57,5 @@ public enum FileType {
     }
 
 }
+
+// stop src/main/java/dev/learn/i2p/proto/FileType.java

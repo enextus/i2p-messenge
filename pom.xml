@@ -17,7 +17,7 @@
         <i2p.core.version>2.7.0</i2p.core.version>
         <i2p.streaming.version>2.7.0</i2p.streaming.version>
 
-        <junit-jupiter.version>5.13.4</junit-jupiter.version>
+        <junit-jupiter.version>5.10.2</junit-jupiter.version>
 
         <jetbrains.version>26.0.2</jetbrains.version>
 

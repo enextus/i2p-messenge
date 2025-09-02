@@ -19,6 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import dev.learn.i2p.core.Constants;
+import java.io.InterruptedIOException;
+
 /**
  * Транспортный слой I2P: создаёт/держит I2PSocketManager и даёт простые API:
  *  - myB32() — вернуть свой b32
@@ -112,9 +115,18 @@ public record I2PTransport(I2PSocketManager mgr) implements Closeable {
         log.info("Connecting to {}", peerB32);
 
         try (I2PSocket s = mgr.connect(dest)) {
-            log.debug("Connected to {}. Executing operation...", peerB32);
+            s.setReadTimeout(Constants.READ_TIMEOUT_MS); // ← применяем таймаут чтения (120s)
+            log.debug("Connected to {}. Read timeout={} ms. Executing operation...",
+                    peerB32, Constants.READ_TIMEOUT_MS);
+
             op.accept(s);
+
             log.debug("Operation on {} completed.", peerB32);
+        } catch (InterruptedIOException e) {
+            // Срабатывает, если read() превысил READ_TIMEOUT_MS
+            log.warn("Read timed out after {} ms while talking to {}: {}",
+                    Constants.READ_TIMEOUT_MS, peerB32, e.getMessage());
+            throw e;
         } catch (I2PException e) {
             log.error("I2P connect failed: {}", e.getMessage(), e);
             throw new IOException("I2P connect failed: " + e.getMessage(), e);
