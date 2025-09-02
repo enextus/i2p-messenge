@@ -1,3 +1,4 @@
+// src/main/java/dev/learn/i2p/core/profile/ResolvedProfile.java
 package dev.learn.i2p.core.profile;
 
 import java.io.Closeable;
@@ -7,28 +8,41 @@ import java.nio.channels.FileLock;
 import java.nio.file.Path;
 
 /** Результат резолва профиля. Держит файл-лок, чтобы профайл был эксклюзивным. */
-public final class ResolvedProfile implements Closeable {
-    public final Path home;
-    public final Path keyFile;
-    public final Path inboxDir;
-    public final boolean ephemeral;
+public record ResolvedProfile(
+        Path home,
+        Path keyFile,
+        Path inboxDir,
+        boolean ephemeral,
+        FileChannel lockChannel, // держим открытым, чтобы не потерять lock
+        FileLock lock
+) implements Closeable {
 
-    final FileChannel lockChannel; // держим открытым, чтобы не потерять lock
-    final FileLock    lock;
-
-    ResolvedProfile(Path home, Path keyFile, Path inboxDir, boolean ephemeral,
-                    FileChannel lockChannel, FileLock lock) {
-        this.home = home;
-        this.keyFile = keyFile;
-        this.inboxDir = inboxDir;
-        this.ephemeral = ephemeral;
-        this.lockChannel = lockChannel;
-        this.lock = lock;
+    // Компактный конструктор: базовая валидация
+    public ResolvedProfile {
+        if (home == null || keyFile == null || inboxDir == null) {
+            throw new IllegalArgumentException("home, keyFile, inboxDir must not be null");
+        }
+        // lockChannel/lock могут быть null, когда lock отключён
     }
 
     @Override
     public void close() throws IOException {
-        try { if (lock != null && lock.isValid()) lock.release(); }
-        finally { if (lockChannel != null && lockChannel.isOpen()) lockChannel.close(); }
+        try {
+            if (lock != null && lock.isValid()) lock.release();
+        } finally {
+            if (lockChannel != null && lockChannel.isOpen()) lockChannel.close();
+        }
     }
+
+    // (необязательно) Чтобы не светить объекты lock* в логах:
+    @Override
+    public String toString() {
+        return "ResolvedProfile[" +
+                "home=" + home +
+                ", keyFile=" + keyFile +
+                ", inboxDir=" + inboxDir +
+                ", ephemeral=" + ephemeral +
+                ']';
+    }
+
 }

@@ -82,11 +82,19 @@ public final class ProfileManager {
     }
 
     private static String stamp() { return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")); }
+
     private static long   pid()   { return ProcessHandle.current().pid(); }
+
     private static String rand8() {
-        long n = Math.abs(ThreadLocalRandom.current().nextLong());
-        String s = Long.toString(n, 36);
-        return s.length() >= 8 ? s.substring(0,8) : String.format("%08s", s).replace(' ', '0');
+        // 36^8 = 2_821_109_907_456 (гарантирует, что base36-представление не длиннее 8 символов)
+        final long BASE36_8 = 2_821_109_907_456L;
+
+        long n = ThreadLocalRandom.current().nextLong(BASE36_8); // [0, 36^8)
+        String s = Long.toString(n, 36);                         // '0-9a-z', нижний регистр
+
+        // ВАЖНО: у %s нельзя флаг '0', поэтому используем "%8s" и замену пробелов на '0'
+        return s.length() >= 8 ? s.substring(0, 8)
+                : String.format("%8s", s).replace(' ', '0');
     }
 
 }

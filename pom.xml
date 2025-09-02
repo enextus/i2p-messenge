@@ -17,11 +17,11 @@
         <i2p.core.version>2.7.0</i2p.core.version>
         <i2p.streaming.version>2.7.0</i2p.streaming.version>
 
-        <junit-jupiter.version>5.10.2</junit-jupiter.version>
+        <junit-jupiter.version>5.11.3</junit-jupiter.version>
 
         <jetbrains.version>26.0.2</jetbrains.version>
 
-        <mockito-junit-jupiter.version>5.2.0</mockito-junit-jupiter.version>
+        <mockito-junit-jupiter.version>5.11.3</mockito-junit-jupiter.version>
 
         <mockito.version>5.12.0</mockito.version>
         <byte-buddy.version>1.17.7</byte-buddy.version>
@@ -29,6 +29,19 @@
 
 
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- BOM ДОЛЖЕН быть здесь; scope=import допустим только тут -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version> <!-- или обновись целиком до 5.11.x -->
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>

@@ -4,6 +4,7 @@
 package dev.learn.i2p;
 
 import dev.learn.i2p.core.FileTypes;
+import dev.learn.i2p.core.Constants; // ← добавлен импорт
 
 import net.i2p.I2PAppContext;
 import net.i2p.I2PException;
@@ -88,9 +89,7 @@ public class I2PMessengerApp {
                 """);
     }
 
-    /**
-     * Создаёт eepPriv.dat-совместимый файл ключей, если его нет.
-     */
+    /** Создаёт eepPriv.dat-совместимый файл ключей, если его нет. */
     private static void ensureKeys() throws Exception {
         if (Files.exists(KEY_FILE)) return;
         Path parent = KEY_FILE.toAbsolutePath().getParent();
@@ -104,9 +103,7 @@ public class I2PMessengerApp {
         System.out.println("New I2P identity created: " + KEY_FILE.toAbsolutePath());
     }
 
-    /**
-     * Создаёт менеджер I2P-сокетов, подключаясь к локальному роутеру по I2CP (127.0.0.1:7654).
-     */
+    /** Создаёт менеджер I2P-сокетов, подключаясь к локальному роутеру по I2CP (127.0.0.1:7654). */
     private static I2PSocketManager createManager() throws Exception {
         Properties opts = new Properties(); // при желании сюда: inbound/outbound.length и т.п.
         try (InputStream in = Files.newInputStream(KEY_FILE)) {
@@ -114,18 +111,14 @@ public class I2PMessengerApp {
         }
     }
 
-    /**
-     * Возвращает свой .b32.i2p адрес.
-     */
+    /** Возвращает свой .b32.i2p адрес. */
     private static String myB32(I2PSocketManager mgr) {
         Destination dest = mgr.getSession().getMyDestination();
         String b32 = Base32.encode(dest.calculateHash().getData()) + ".b32.i2p";
         return b32.toLowerCase();
     }
 
-    /**
-     * Запускает серверный цикл приёма сообщений.
-     */
+    /** Запускает серверный цикл приёма сообщений. */
     private static void listenLoop(I2PSocketManager mgr) throws IOException {
         Files.createDirectories(INBOX_DIR);
         I2PServerSocket server = mgr.getServerSocket();
@@ -133,6 +126,10 @@ public class I2PMessengerApp {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 I2PSocket socket = server.accept(); // может кидать I2PException
+
+                // ← сразу задаём таймаут чтения для входящего соединения
+                socket.setReadTimeout(Constants.READ_TIMEOUT_MS);
+
                 Thread t = new Thread(() -> handleClient(socket), "i2p-client-" + System.nanoTime());
                 t.setDaemon(true);
                 t.start();
@@ -142,17 +139,14 @@ public class I2PMessengerApp {
         }
     }
 
-    /**
-     * Обработка входящего соединения.
-     */
+    /** Обработка входящего соединения. */
     private static void handleClient(I2PSocket socket) {
         try (socket;
              DataInputStream in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
              DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))) {
 
             try {
-                // таймаут, чтобы не висеть бесконечно
-                socket.setReadTimeout(120_000);
+                // Таймаут уже задан в listenLoop(...) через setReadTimeout(Constants.READ_TIMEOUT_MS)
 
                 final int MAX_IMAGE = 32 * 1024 * 1024; // 32 MB safety cap
                 int type = in.readUnsignedByte(); // 1=text, 2=image
@@ -192,6 +186,8 @@ public class I2PMessengerApp {
                     out.writeUTF("ERR: unknown type");
                 }
                 out.flush();
+            } catch (InterruptedIOException e) {
+                System.err.println("Read timed out after " + Constants.READ_TIMEOUT_MS + " ms: " + e.getMessage());
             } catch (IOException e) {
                 System.err.println("Client error: " + e.getMessage());
             }
@@ -199,9 +195,7 @@ public class I2PMessengerApp {
         }
     }
 
-    /**
-     * Отправка текстового сообщения.
-     */
+    /** Отправка текстового сообщения. */
     private static void sendText(I2PSocketManager mgr, String destB32, String message) {
         try (I2PSocket s = connect(mgr, destB32);
              DataOutputStream out = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()));
@@ -218,9 +212,7 @@ public class I2PMessengerApp {
         }
     }
 
-    /**
-     * Отправка изображения.
-     */
+    /** Отправка изображения. */
     private static void sendImage(I2PSocketManager mgr, String destB32, Path imgPath) {
         try {
             Objects.requireNonNull(imgPath, "Image path required");
@@ -246,9 +238,7 @@ public class I2PMessengerApp {
         }
     }
 
-    /**
-     * Подключение к пиру по .b32 адресу.
-     */
+    /** Подключение к пиру по .b32 адресу. */
     private static I2PSocket connect(I2PSocketManager mgr, String hostB32) throws IOException {
         Destination dest = resolveDestination(hostB32);
         try {
@@ -268,8 +258,5 @@ public class I2PMessengerApp {
     private static String sanitize(String name) {
         return name.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
-
-
 }
-
 // End of I2PMessengerApp.java

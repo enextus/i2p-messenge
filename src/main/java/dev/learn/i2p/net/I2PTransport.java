@@ -15,12 +15,12 @@ import org.slf4j.MDC;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
 import dev.learn.i2p.core.Constants;
-import java.io.InterruptedIOException;
 
 /**
  * Транспортный слой I2P: создаёт/держит I2PSocketManager и даёт простые API:
@@ -84,14 +84,23 @@ public record I2PTransport(I2PSocketManager mgr) implements Closeable {
 
         while (!Thread.currentThread().isInterrupted()) {
             try (I2PSocket socket = server.accept()) { // может бросить I2PException
+                // ← симметрично ставим таймаут на входящее соединение
+                socket.setReadTimeout(Constants.READ_TIMEOUT_MS);
+
                 Destination peer = socket.getPeerDestination();
                 String peerB32 = (peer != null) ? toB32(peer) : "<unknown>";
                 MDC.put("peer", "[" + peerB32 + "]");
-                log.info("Inbound connection accepted from {}", peerB32);
+                log.info("Inbound connection accepted from {} (readTimeout={} ms)",
+                        peerB32, Constants.READ_TIMEOUT_MS);
 
-                handler.accept(socket);
-
-                log.debug("Inbound connection from {} handled.", peerB32);
+                try {
+                    handler.accept(socket);
+                    log.debug("Inbound connection from {} handled.", peerB32);
+                } catch (InterruptedIOException e) {
+                    log.warn("Read timed out after {} ms while talking to {}: {}",
+                            Constants.READ_TIMEOUT_MS, peerB32, e.getMessage());
+                    throw e;
+                }
             } catch (I2PException | IOException e) {
                 // логируем и продолжаем; при желании можно добавить backoff
                 log.warn("Accept failed: {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
@@ -115,15 +124,13 @@ public record I2PTransport(I2PSocketManager mgr) implements Closeable {
         log.info("Connecting to {}", peerB32);
 
         try (I2PSocket s = mgr.connect(dest)) {
-            s.setReadTimeout(Constants.READ_TIMEOUT_MS); // ← применяем таймаут чтения (120s)
+            s.setReadTimeout(Constants.READ_TIMEOUT_MS); // клиентский таймаут
             log.debug("Connected to {}. Read timeout={} ms. Executing operation...",
                     peerB32, Constants.READ_TIMEOUT_MS);
 
             op.accept(s);
-
             log.debug("Operation on {} completed.", peerB32);
         } catch (InterruptedIOException e) {
-            // Срабатывает, если read() превысил READ_TIMEOUT_MS
             log.warn("Read timed out after {} ms while talking to {}: {}",
                     Constants.READ_TIMEOUT_MS, peerB32, e.getMessage());
             throw e;

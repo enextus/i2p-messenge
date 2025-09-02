@@ -26,11 +26,11 @@ class ProfileManagerTest {
     @Test
     void resolve_default_creates_dirs(@TempDir Path tmp) throws Exception {
         System.setProperty("i2p.messenger.home", tmp.resolve(".i2p-messenger").toString());
-        ResolvedProfile rp = ProfileManager.resolveFromSystemProps();
-        assertTrue(Files.exists(rp.keyFile.getParent()));
-        assertTrue(Files.exists(rp.inboxDir));
-        assertFalse(rp.ephemeral);
-        rp.close();
+        try (ResolvedProfile rp = ProfileManager.resolveFromSystemProps()) {
+            assertTrue(Files.exists(rp.keyFile().getParent()));
+            assertTrue(Files.exists(rp.inboxDir()));
+            assertFalse(rp.ephemeral());
+        }
     }
 
     @Test
@@ -39,9 +39,9 @@ class ProfileManagerTest {
         Path key  = tmp.resolve("custom").resolve("keys.dat");
         System.setProperty("i2p.messenger.home", base.toString());
         System.setProperty("i2p.messenger.keyfile", key.toString());
-        ResolvedProfile rp = ProfileManager.resolveFromSystemProps();
-        assertEquals(key.normalize(), rp.keyFile.normalize());
-        rp.close();
+        try (ResolvedProfile rp = ProfileManager.resolveFromSystemProps()) {
+            assertEquals(key.normalize(), rp.keyFile().normalize());
+        }
     }
 
     @Test
@@ -58,10 +58,11 @@ class ProfileManagerTest {
             assertNotNull(lock); // у этого теста блок есть
 
             // теперь наш резолвер должен уйти в ephemeral
-            ResolvedProfile rp = ProfileManager.resolve(base, key, base.resolve("inbox"), true, false);
-            assertTrue(rp.ephemeral, "expected an ephemeral profile if lock is busy");
-            assertTrue(rp.home.toString().contains("profiles\\") || rp.home.toString().contains("profiles/"));
-            rp.close();
+            try (ResolvedProfile rp = ProfileManager.resolve(base, key, base.resolve("inbox"), true, false)) {
+                assertTrue(rp.ephemeral(), "expected an ephemeral profile if lock is busy");
+                // OS-agnostic: родитель каталога home — должен быть "profiles"
+                assertEquals("profiles", rp.home().getParent().getFileName().toString());
+            }
         }
     }
 
@@ -80,5 +81,4 @@ class ProfileManagerTest {
                     () -> ProfileManager.resolve(base, key, base.resolve("inbox"), false, false));
         }
     }
-
 }
