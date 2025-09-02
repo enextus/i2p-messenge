@@ -11,32 +11,26 @@
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <i2p.core.version>2.7.0</i2p.core.version>
         <i2p.streaming.version>2.7.0</i2p.streaming.version>
 
+        <!-- можно оставить, но версии берём из BOM -->
         <junit-jupiter.version>5.11.3</junit-jupiter.version>
 
         <jetbrains.version>26.0.2</jetbrains.version>
-
-        <mockito-junit-jupiter.version>5.11.3</mockito-junit-jupiter.version>
-
         <mockito.version>5.12.0</mockito.version>
         <byte-buddy.version>1.17.7</byte-buddy.version>
-
-
-
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- BOM ДОЛЖЕН быть здесь; scope=import допустим только тут -->
+            <!-- ОДИН источник правды для JUnit: Jupiter + Platform (1.11.3) -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>${junit-jupiter.version}</version> <!-- или обновись целиком до 5.11.x -->
+                <version>5.11.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -44,17 +38,19 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- УДАЛИЛ версию 1.13.4. Либо вообще убери этот завис, либо оставь БЕЗ версии под управлением BOM -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
-            <version>1.13.4</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>net.i2p</groupId>
             <artifactId>i2p</artifactId>
             <version>${i2p.core.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -73,10 +69,10 @@
             <version>${i2p.streaming.version}</version>
         </dependency>
 
+        <!-- Агрегат: подтягивает согласованные api/engine/params -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -93,17 +89,13 @@
             <version>1.15.4</version>
         </dependency>
 
-
-        <!-- Mockito JUnit5 интеграция -->
+        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- Inline-мокер (нужен для мокинга final/record) -->
-        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-inline -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
@@ -111,7 +103,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ЯВНО перетираем транзитивные старые версии Byte Buddy -->
+        <!-- Перешибаем ByteBuddy, если вдруг старьё приедет транзитивно -->
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
@@ -124,8 +116,6 @@
             <version>${byte-buddy.version}</version>
             <scope>test</scope>
         </dependency>
-
-
     </dependencies>
 
     <build>
@@ -141,7 +131,7 @@
                 </configuration>
             </plugin>
 
-            <!-- surefire для JUnit 5 -->
+            <!-- surefire совместим с Platform 1.11.x -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -151,8 +141,7 @@
                 </configuration>
             </plugin>
 
-            <!-- 1) Один Shade, два исполнения: cli и app -->
-            <!-- твой shade-плагин: добавим ServicesResourceTransformer в оба execution -->
+            <!-- shade и пр. без изменений -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -176,46 +165,36 @@
                     <execution>
                         <id>shade-cli</id>
                         <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
+                        <goals><goal>shade</goal></goals>
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>cli</shadedClassifierName>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>dev.learn.i2p.cli.Main</mainClass>
                                 </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>shade-app</id>
                         <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
+                        <goals><goal>shade</goal></goals>
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>app</shadedClassifierName>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>dev.learn.i2p.I2PMessengerApp</mainClass>
                                 </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- 2) (Опционально) Оставляем обычный тонкий JAR без Main-Class -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -223,7 +202,6 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <!-- НЕ задаём Main-Class здесь, чтобы не путать запуск -->
                             <addClasspath>false</addClasspath>
                         </manifest>
                     </archive>
@@ -234,8 +212,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.5.0</version>
-
-                <!-- ВАЖНО: это зависимость к ПЛАГИНУ -->
                 <dependencies>
                     <dependency>
                         <groupId>org.codehaus.mojo</groupId>
@@ -243,32 +219,19 @@
                         <version>1.10.0</version>
                     </dependency>
                 </dependencies>
-
                 <executions>
                     <execution>
                         <id>enforce</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
+                        <goals><goal>enforce</goal></goals>
                         <configuration>
                             <rules>
-                                <requireJavaVersion>
-                                    <version>[21,)</version>
-                                </requireJavaVersion>
-
-                                <!-- Само правило дублей -->
+                                <requireJavaVersion><version>[21,)</version></requireJavaVersion>
                                 <BanDuplicateClasses/>
                             </rules>
-                            <!-- Не падать сборкой, если что — на время отладки можно включить:
-                            <fail>true</fail>
-                            -->
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
-
     </build>
-
 </project>
