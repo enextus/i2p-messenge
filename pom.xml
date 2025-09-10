@@ -12,30 +12,22 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <i2p.core.version>2.8.0</i2p.core.version>
+        <i2p.core.version>2.7.0</i2p.core.version>
         <i2p.streaming.version>2.7.0</i2p.streaming.version>
-
-        <!-- можно оставить, но версии берём из BOM -->
         <junit-jupiter.version>5.13.4</junit-jupiter.version>
         <junit-bom.version>5.13.4</junit-bom.version>
-
         <jetbrains.version>26.0.2</jetbrains.version>
-        <mockito.version>5.19.0</mockito.version>
+        <mockito.version>5.10.0</mockito.version>
         <byte-buddy.version>1.17.7</byte-buddy.version>
-
-
         <slf4j-api.version>2.0.17</slf4j-api.version>
-
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- ОДИН источник правды для JUnit: Jupiter + Platform (1.11.3) -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>${junit-bom}</version>
+                <version>${junit-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -43,7 +35,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- УДАЛИЛ версию 1.13.4. Либо вообще убери этот завис, либо оставь БЕЗ версии под управлением BOM -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
@@ -81,8 +72,6 @@
             <version>${i2p.streaming.version}</version>
         </dependency>
 
-
-
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
@@ -103,6 +92,7 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
@@ -117,6 +107,7 @@
             <version>${byte-buddy.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
@@ -138,7 +129,6 @@
                 </configuration>
             </plugin>
 
-
             <!-- Jacoco будет писать в ${surefireArgLine}, чтобы не перетирать ваши флаги -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -157,16 +147,18 @@
                     <execution>
                         <id>jacoco-check</id>
                         <phase>verify</phase>
-                        <goals><goal>check</goal></goals>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                         <configuration>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
 
-                                    <!-- исключения именно для проверки -->
+                                    <!-- ИСКЛЮЧЕНИЯ: VM-формат с / -->
                                     <excludes>
-                                        <exclude>dev.learn.i2p.cli.*</exclude>
-                                        <exclude>dev.learn.i2p.I2PMessengerApp*</exclude>
+                                        <exclude>dev/learn/i2p/cli/**</exclude>
+                                        <exclude>dev/learn/i2p/I2PMessengerApp*</exclude>
                                     </excludes>
 
                                     <limits>
@@ -188,7 +180,9 @@
 
                     <execution>
                         <id>jacoco-prepare-agent</id>
-                        <goals><goal>prepare-agent</goal></goals>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
                         <configuration>
                             <propertyName>argLine</propertyName>
                         </configuration>
@@ -198,13 +192,14 @@
                     <execution>
                         <id>jacoco-report</id>
                         <phase>verify</phase>
-                        <goals><goal>report</goal></goals>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
                     </execution>
 
 
                 </executions>
             </plugin>
-
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -324,4 +319,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
