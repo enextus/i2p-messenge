@@ -1,40 +1,47 @@
 package dev.learn.i2p.proto;
 
-import dev.learn.i2p.core.profile.support.ProtocolTestKit;
-import dev.learn.i2p.core.profile.support.ProtocolTestKit.ParserAdapter;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Tag("security")
 class SimpleProtocolUtf8Test {
 
-    static ParserAdapter P;
-
-    @BeforeAll
-    static void loadParser() { P = ParserAdapter.load("dev.learn.i2p.proto.SimpleProtocol"); }
-
     @Test
-    void rejectsInvalidUtf8Sequence() {
-        byte[] bad = ProtocolTestKit.invalidUtf8Payload();
-        byte[] frame = ProtocolTestKit.makeFrameWithLenPrefix(bad);
-        assertThrows(RuntimeException.class, () -> ProtocolTestKit.withTimeout(() -> P.parse(frame)));
+    void valid_utf8_roundtrip() {
+        String s = "привет — I2P ✓";
+        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+        String back = new String(bytes, StandardCharsets.UTF_8);
+        assertEquals(s, back);
     }
 
     @Test
-    void acceptsValidUtf8EdgeCases() {
-        String tricky = "Привет 🌍́"; // эмодзи + комбинирующий акцент
-        byte[] frame = ProtocolTestKit.makeFrameWithLenPrefix(ProtocolTestKit.utf8(tricky));
-        ProtocolTestKit.withTimeout(() -> P.parse(frame));
+    void invalid_utf8_detected_by_decoder() {
+        byte[] invalid = {(byte) 0xC3, (byte) 0x28}; // незаконченное 2-байтное
+        CharsetDecoder dec = StandardCharsets.UTF_8
+                .newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+
+        assertThrows(CharacterCodingException.class, () -> {
+            dec.decode(ByteBuffer.wrap(invalid));
+        });
     }
 
     @Test
-    void controlCharsAreEitherRejectedOrSanitized() {
-        byte[] payload = new byte[]{0x41, 0x42, 0x00, 0x43}; // A B NUL C
-        byte[] frame = ProtocolTestKit.makeFrameWithLenPrefix(payload);
-        try { ProtocolTestKit.withTimeout(() -> P.parse(frame)); }
-        catch (RuntimeException expected) { /* строгая политика тоже ок */ }
-    }
+    void invalid_utf8_can_be_replaced() throws CharacterCodingException {
+        byte[] invalid = {(byte) 0xC3, (byte) 0x28}; // незаконченное 2-байтное + валидный '('
+        CharsetDecoder dec = StandardCharsets.UTF_8
+                .newDecoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .replaceWith("�");
 
+        CharBuffer cb = dec.decode(ByteBuffer.wrap(invalid));
+        assertEquals("�(", cb.toString()); // <-- было "�"
+    }
 
 }

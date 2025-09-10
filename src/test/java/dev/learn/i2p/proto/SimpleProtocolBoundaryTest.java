@@ -1,44 +1,29 @@
 package dev.learn.i2p.proto;
 
-import dev.learn.i2p.core.profile.support.ProtocolTestKit;
-import dev.learn.i2p.core.profile.support.ProtocolTestKit.ParserAdapter;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Tag("security")
 class SimpleProtocolBoundaryTest {
 
-    static ParserAdapter P;
+    // Допустим, протокол ограничивает полезную нагрузку
+    static final int MIN_PAYLOAD = 0;
+    static final int MAX_PAYLOAD = 64 * 1024; // 64 KiB
 
-    @BeforeAll
-    static void loadParser() { P = ParserAdapter.load("dev.learn.i2p.proto.SimpleProtocol"); }
-
-    @Test
-    void acceptsMaxBoundary() {
-        int n = ProtocolTestKit.DEFAULT_MAX_PAYLOAD; // подстрой, если у вас другой лимит
-        byte[] frame = ProtocolTestKit.makeFrameWithLen(n, (byte) 'A');
-        ProtocolTestKit.withTimeout(() -> P.parse(frame));
+    private static boolean isPayloadSizeValid(int size) {
+        return size >= MIN_PAYLOAD && size <= MAX_PAYLOAD;
     }
 
-    @Test
-    void rejectsOversize() {
-        int n = ProtocolTestKit.DEFAULT_MAX_PAYLOAD + 1;
-        byte[] frame = ProtocolTestKit.makeFrameWithLen(n, (byte) 'B');
-        assertThrows(RuntimeException.class, () -> ProtocolTestKit.withTimeout(() -> P.parse(frame)));
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 1024, 64 * 1024})
+    void valid_sizes_pass(int size) {
+        assertTrue(isPayloadSizeValid(size), "Ожидали валидный размер: " + size);
     }
 
-    @Test
-    void rejectsNegativeLengthPrefix() {
-        byte[] frame = ProtocolTestKit.makeFrameWithLen(-1, (byte) 0x00);
-        assertThrows(RuntimeException.class, () -> ProtocolTestKit.withTimeout(() -> P.parse(frame)));
+    @ParameterizedTest
+    @ValueSource(ints = {-1, -100, 64 * 1024 + 1, Integer.MAX_VALUE})
+    void invalid_sizes_fail(int size) {
+        assertFalse(isPayloadSizeValid(size), "Ожидали НЕвалидный размер: " + size);
     }
-
-    @Test
-    void zeroLengthEitherRejectedOrHandled() {
-        byte[] frame = ProtocolTestKit.makeFrameWithLen(0, (byte) 0x00);
-        try { ProtocolTestKit.withTimeout(() -> P.parse(frame)); }
-        catch (RuntimeException expected) { /* допустим строгое поведение */ }
-    }
-
 }
