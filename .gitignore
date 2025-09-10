@@ -48,3 +48,14 @@ inbox/
 # I2P
 *.dat
 !messenger-keys.dat
+
+# build
+/target/
+
+# runtime artifacts
+/logs/
+/messenger-keys.dat
+
+# IDE (на всякий случай)
+/*.iml
+
