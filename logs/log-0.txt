@@ -1,0 +1,13 @@
+05.09.2025, 21:59:24 FEHLER   [ent Writer 1] lient.impl.I2PSessionMuxedImpl: [I2PSessionMuxedImpl(CLOSED)]: Error occurred communicating with router: Error writing out the message
+java.net.SocketException: Socket closed
+	at java.base/sun.nio.ch.NioSocketImpl.endWrite(NioSocketImpl.java:379)
+	at java.base/sun.nio.ch.NioSocketImpl.implWrite(NioSocketImpl.java:422)
+	at java.base/sun.nio.ch.NioSocketImpl.write(NioSocketImpl.java:440)
+	at java.base/sun.nio.ch.NioSocketImpl$2.write(NioSocketImpl.java:819)
+	at java.base/java.net.Socket$SocketOutputStream.write(Socket.java:1195)
+	at java.base/java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:125)
+	at java.base/java.io.BufferedOutputStream.implFlush(BufferedOutputStream.java:252)
+	at java.base/java.io.BufferedOutputStream.flush(BufferedOutputStream.java:240)
+	at net.i2p.client.impl.ClientWriterRunner.run(ClientWriterRunner.java:92)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+	at net.i2p.util.I2PThread.run(I2PThread.java:103)

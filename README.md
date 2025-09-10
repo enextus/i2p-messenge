@@ -83,7 +83,7 @@ echo "$ALICE_B32"
 java -Dfile.encoding=UTF-8 \
   -Di2p.i2cp.host=127.0.0.1 -Di2p.i2cp.port=7654 \
   -Di2p.messenger.home="$BOB_HOME" \
-  -jar target/i2p-messenger-1.0-SNAPSHOT-cli.jar send-text "$ALICE_B32" "Привет из Bob 👋"
+  -jar target/i2p-messenger-1.0-SNAPSHOT-cli.jar send-text "$ALICE_B32" "HALLO FROM BERLIN"
 ```
 
 Проверить на стороне Alice (где запущен `listen`), что в инбоксе появился новый файл:

@@ -10,23 +10,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import dev.learn.i2p.core.InboundSaver;
-import java.io.InputStream;
-import java.nio.file.Path;
-import net.i2p.client.streaming.I2PSocket;
+import net.i2p.data.Base32;
+import org.slf4j.LoggerFactory;
 
-public class SimpleProtocol implements MessengerProtocol {
-    private final Path inbox;
-
-    public SimpleProtocol(Path inbox) {
-        this.inbox = inbox;
-    }
+public record SimpleProtocol(Path inbox) implements MessengerProtocol {
 
     @Override
-    public void handle(I2PSocket socket) throws java.io.IOException {
+    public void handle(I2PSocket socket) throws IOException {
         String senderB32 = null;
         try {
             var peer = socket.getPeerDestination();
-            if (peer != null) senderB32 = net.i2p.data.Base32.encode(peer.calculateHash().getData()) + ".b32.i2p";
+            if (peer != null) senderB32 = Base32.encode(peer.calculateHash().getData()) + ".b32.i2p";
         } catch (Throwable ignore) {
             // best-effort: адрес отправителя не обязателен
         }
@@ -34,7 +28,7 @@ public class SimpleProtocol implements MessengerProtocol {
         try (InputStream in = socket.getInputStream()) {
             Path saved = InboundSaver.saveSmart(inbox, senderB32, in);
             // Лог — информативный: mime/ext/size пишет InboundSaver; тут можно кратко
-            org.slf4j.LoggerFactory.getLogger(SimpleProtocol.class)
+            LoggerFactory.getLogger(SimpleProtocol.class)
                     .info("Inbound stored as {}", saved.getFileName());
         }
     }
